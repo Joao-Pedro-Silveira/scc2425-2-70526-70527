@@ -8,17 +8,22 @@ import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
 
+import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.Response;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
 import utils.DB;
 import utils.CosmosDB;
 import tukano.impl.cache.CacheForCosmos;
+import tukano.impl.cache.RedisLayer;
 import tukano.impl.data.Following;
 
 
@@ -31,6 +36,9 @@ public class JavaUsers implements Users {
 
 	private boolean nosql = Boolean.parseBoolean(dotenv.get("NOSQL"));
 	private boolean cache = Boolean.parseBoolean(dotenv.get("CACHE"));
+
+	static final String COOKIE_KEY = "scc:session";
+	private static final int MAX_COOKIE_AGE = 3600;
 	
 	synchronized public static Users getInstance() {
 		if( instance == null )
@@ -99,6 +107,25 @@ public class JavaUsers implements Users {
 		}
 
 		return validatedUserOrError(dbres, pwd);
+	}
+
+	private Result<User> userLogin(Result<User> res, String pwd) {
+		var user = res.value();
+		System.out.println("user: " + user.getDisplayName() + " pwd:" + pwd );
+		var verificationRes = validatedUserOrError(res, pwd);
+		if (verificationRes.isOK()) {
+			String uid = UUID.randomUUID().toString();
+			var cookie = new NewCookie.Builder(COOKIE_KEY)
+					.value(uid).path("/")
+					.comment("sessionid")
+					.maxAge(MAX_COOKIE_AGE)
+					.secure(false) //ideally it should be true to only work for https requests
+					.httpOnly(true)
+					.build();
+			
+			RedisLayer.getInstance().putSession( new Session( uid, user.toString())); //not sure if correct	
+		}
+		return verificationRes;
 	}
 
 	@Override
