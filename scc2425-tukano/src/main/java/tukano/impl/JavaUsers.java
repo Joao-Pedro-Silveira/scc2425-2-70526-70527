@@ -33,12 +33,6 @@ public class JavaUsers implements Users {
 
 	private static Users instance;
 	private static Dotenv dotenv = Dotenv.load();
-
-	private boolean nosql = Boolean.parseBoolean(dotenv.get("NOSQL"));
-	private boolean cache = Boolean.parseBoolean(dotenv.get("CACHE"));
-
-	static final String COOKIE_KEY = "scc:session";
-	private static final int MAX_COOKIE_AGE = 3600;
 	
 	synchronized public static Users getInstance() {
 		if( instance == null )
@@ -58,23 +52,16 @@ public class JavaUsers implements Users {
 
 		Result<User> res;
 
-		if(nosql){
-			Log.info(() -> "Using CosmosDB");
-			res = CosmosDB.insertOne(user);
-		} 
-		else {
-			Log.info(() -> "Using SQL DB");
-			res = DB.insertOne(user);
-		}
+		Log.info(() -> "Using SQL DB");
+		res = DB.insertOne(user);
 
-		if(res.isOK() && cache){
+		if(res.isOK()){
 			Log.info(() -> "Inserting into cache");
 			CacheForCosmos.insertOne("users:"+user.getUserId(), user);
 			//DB.insertOne(new Following(user.getUserId()));
 		}
 		Log.info(() -> "Returning result");
 		return errorOrValue(res, user.getUserId());
-		
 	}
 
 	@Override
@@ -84,48 +71,24 @@ public class JavaUsers implements Users {
 		if (userId == null)
 			return error(BAD_REQUEST);
 		
-		if(cache){
-			var res = CacheForCosmos.getOne("users:"+userId, User.class, true);
-			if(res.isOK()){
+		var res = CacheForCosmos.getOne("users:"+userId, User.class, true);
+		if(res.isOK()){
 
-				Log.info(() -> "User found in cache ");
-
-				return validatedUserOrError(res, pwd);
-			}
+			Log.info(() -> "User found in cache ");
+			
+			Authentication.login(res.value().getUserId(), pwd);
+			return validatedUserOrError(res, pwd);
 		}
 
-		Result<User> dbres;
-		if(nosql){
-			dbres = CosmosDB.getOne(userId, User.class);
-		} else {
-			dbres = DB.getOne( userId, User.class);
-		}
+		Result<User> dbres = DB.getOne( userId, User.class);
 
-		if(dbres.isOK() && cache){
+		if(dbres.isOK()){
 			Log.info(() -> "User found in DB");
 			CacheForCosmos.insertOne("users:"+userId, dbres.value());
 		}
 
+		Authentication.login(dbres.value().getUserId(), pwd);
 		return validatedUserOrError(dbres, pwd);
-	}
-
-	private Result<User> userLogin(Result<User> res, String pwd) {
-		var user = res.value();
-		System.out.println("user: " + user.getDisplayName() + " pwd:" + pwd );
-		var verificationRes = validatedUserOrError(res, pwd);
-		if (verificationRes.isOK()) {
-			String uid = UUID.randomUUID().toString();
-			var cookie = new NewCookie.Builder(COOKIE_KEY)
-					.value(uid).path("/")
-					.comment("sessionid")
-					.maxAge(MAX_COOKIE_AGE)
-					.secure(false) //ideally it should be true to only work for https requests
-					.httpOnly(true)
-					.build();
-			
-			RedisLayer.getInstance().putSession( new Session( uid, user.toString())); //not sure if correct	
-		}
-		return verificationRes;
 	}
 
 	@Override
@@ -134,23 +97,14 @@ public class JavaUsers implements Users {
 
 		if (badUpdateUserInfo(userId, pwd, other))
 				return error(BAD_REQUEST);
-		if (nosql) {
-			return errorOrResult( validatedUserOrError(CosmosDB.getOne(userId, User.class), pwd), user -> {
-				var res = CosmosDB.updateOne(user.updateFrom(other));
-				if(res.isOK() && cache){
-					CacheForCosmos.updateOne("users:"+userId, res.value());
-				}
-				return res;
-			});
-		} else {
-			return errorOrResult( validatedUserOrError(DB.getOne(userId, User.class), pwd), user -> {
-				var res = DB.updateOne( user.updateFrom(other));
-				if(res.isOK() && cache){
-					CacheForCosmos.updateOne("users:"+userId, res.value());
-				}
-				return res;
-			});
-		}
+
+		return errorOrResult( validatedUserOrError(DB.getOne(userId, User.class), pwd), user -> {
+			var res = DB.updateOne( user.updateFrom(other));
+			if(res.isOK()){
+				CacheForCosmos.updateOne("users:"+userId, res.value());
+			}
+			return res;
+		});
 	}
 
 	@Override
@@ -160,54 +114,31 @@ public class JavaUsers implements Users {
 		if (userId == null || pwd == null )
 			return error(BAD_REQUEST);
 
-		if(nosql){
-			return errorOrResult( validatedUserOrError(CosmosDB.getOne(userId, User.class), pwd), user -> {
+		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> {
+
+			// Delete user shorts and related info asynchronously in a separate thread
+			Executors.defaultThreadFactory().newThread( () -> {
 				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
+			}).start();
 
-				CosmosDB.deleteOne(user);
-				if(cache)
-					CacheForCosmos.deleteOne("users:"+userId);
-				return ok(user);
-			});
-		} else {
-			return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> {
-
-				// Delete user shorts and related info asynchronously in a separate thread
-				Executors.defaultThreadFactory().newThread( () -> {
-					JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
-					JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
-				}).start();
-
-				if(cache)
-					CacheForCosmos.deleteOne("users:"+userId);
-				
-				return DB.deleteOne( user);
-			});
-		}
+			CacheForCosmos.deleteOne("users:"+userId);
+			
+			return DB.deleteOne( user);
+		});
 	}
 
 	@Override
 	public Result<List<User>> searchUsers(String pattern) {
 		Log.info( () -> format("searchUsers : patterns = %s\n", pattern));
 
-		if(nosql){
-			var query = format("SELECT * FROM User u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
-			var hits = CosmosDB.sql(query, User.class)
-					.stream()
-					.map(User::copyWithoutPassword)
-					.toList();
-			
-			return ok(hits);
-		} else {
-			var query = format("SELECT * FROM users u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
-			var hits = DB.sql(query, User.class)
-					.stream()
-					.map(User::copyWithoutPassword)
-					.toList();
+		var query = format("SELECT * FROM users u WHERE UPPER(u.userId) LIKE '%%%s%%'", pattern.toUpperCase());
+		var hits = DB.sql(query, User.class)
+				.stream()
+				.map(User::copyWithoutPassword)
+				.toList();
 
-			return ok(hits);
-		}
+		return ok(hits);
 	}
 
 	

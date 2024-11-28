@@ -42,6 +42,8 @@ public class JavaBlobs implements Blobs {
 		if (!validBlobId(blobId, token))
 			return error(FORBIDDEN);
 
+		Authentication.validateSession();
+
 		return storage.write( toPath( blobId ), bytes);
 	}
 
@@ -51,6 +53,8 @@ public class JavaBlobs implements Blobs {
 
 		if( ! validBlobId( blobId, token ) )
 			return error(FORBIDDEN);
+
+		Authentication.validateSession();
 
 		return storage.read( toPath( blobId ) );
 	}
@@ -62,6 +66,8 @@ public class JavaBlobs implements Blobs {
 		if( ! validBlobId( blobId, token ) )
 			return error(FORBIDDEN);
 
+		Authentication.validateSession("admin"); //TODO: create admin session
+
 		return storage.delete( toPath(blobId));
 	}
 	
@@ -72,6 +78,8 @@ public class JavaBlobs implements Blobs {
 		if( ! Token.isValid( token, userId ) )
 			return error(FORBIDDEN);
 		
+		Authentication.validateSession("admin"); //TODO: create admin session
+
 		return storage.delete( toPath(userId));
 	}
 	

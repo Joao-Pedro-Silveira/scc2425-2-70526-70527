@@ -24,8 +24,8 @@ public class Authentication {
 	private static final int MAX_COOKIE_AGE = 3600;
 	static final String REDIRECT_TO_AFTER_LOGIN = "/ctrl/version";
 
-	public Response login( @FormParam(USER) String user, @FormParam(PWD) String password ) {
-		System.out.println("user: " + user + " pwd:" + password );
+	public Response login( String userId, String password ) {
+		System.out.println("user: " + userId + " pwd:" + password );
 		boolean pwdOk = true; // replace with code to check user password
 		if (pwdOk) {
 			String uid = UUID.randomUUID().toString();
@@ -37,9 +37,9 @@ public class Authentication {
 					.httpOnly(true)
 					.build();
 			
-			RedisLayer.getInstance().putSession( new Session( uid, user));	
+			RedisLayer.getInstance().putSession( new Session( uid, userId));	
 			
-            return Response.seeOther(URI.create( REDIRECT_TO_AFTER_LOGIN ))
+            return Response.ok()
                     .cookie(cookie) 
                     .build();
 		} else
@@ -49,7 +49,7 @@ public class Authentication {
 	public String login() {
 		try {
 			var in = getClass().getClassLoader().getResourceAsStream(LOGIN_PAGE);
-			return new String( in.readAllBytes() );			
+			return new String( in.readAllBytes() );	
 		} catch( Exception x ) {
 			throw new WebApplicationException( Status.INTERNAL_SERVER_ERROR );
 		}
@@ -74,6 +74,23 @@ public class Authentication {
 		
 		if (!session.user().equals(userId))
 			throw new NotAuthorizedException("Invalid user : " + session.user());
+		
+		return session;
+	}
+
+	static public Session validateSession() throws NotAuthorizedException {
+		var cookies = RequestCookies.get();
+		var cookie = cookies.get(COOKIE_KEY);
+		if (cookie == null )
+			throw new NotAuthorizedException("No session initialized");
+		
+		var session = RedisLayer.getInstance().getSession( cookie.getValue());
+		if( session == null )
+			throw new NotAuthorizedException("No valid session initialized");
+			
+		if (session.user() == null || session.user().length() == 0) 
+			throw new NotAuthorizedException("No valid session initialized");
+		
 		
 		return session;
 	}
