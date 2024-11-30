@@ -24,7 +24,7 @@ public class Authentication {
 	private static final int MAX_COOKIE_AGE = 3600;
 	static final String REDIRECT_TO_AFTER_LOGIN = "/ctrl/version";
 
-	public Response login( String userId, String password ) {
+	static public Response login( String userId, String password ) {
 		System.out.println("user: " + userId + " pwd:" + password );
 		boolean pwdOk = true; // replace with code to check user password
 		if (pwdOk) {
