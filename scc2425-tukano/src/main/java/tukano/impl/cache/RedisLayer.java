@@ -12,10 +12,10 @@ public class RedisLayer {
 	}
 	
 	public void putSession(Session s) {
-		CacheForCosmos.insertOne(s.uid(), s);
+		CacheForCosmos.insertOne(s.uid(), s,3600);
 	}
 	
 	public Session getSession(String uid) {
-		return CacheForCosmos.getOne(uid, Session.class, true).value();
+		return CacheForCosmos.getOne(uid, Session.class, false).value();
 	}
 }

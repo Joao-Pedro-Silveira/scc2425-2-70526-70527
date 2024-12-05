@@ -58,4 +58,12 @@ public class CacheForCosmos {
 		
 		return Result.ok(obj);
 	}
+
+	public static <T> Result<T> insertOne(String key, T obj, int ttl) {
+
+        var jedis = RedisCache.getCachePool().getResource();
+        jedis.setex(key, ttl, JSON.encode(obj));
+		
+		return Result.ok(obj);
+	}
 }
