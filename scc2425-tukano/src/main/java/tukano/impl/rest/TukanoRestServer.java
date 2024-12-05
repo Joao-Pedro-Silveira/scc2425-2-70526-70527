@@ -40,7 +40,6 @@ public class TukanoRestServer extends Application {
 		Token.setSecret( Args.valueOf("-secret", "bonk"));
 		serverURI = "https://scc-70526-70527.azurewebsites.net/rest";//String.format(SERVER_BASE_URI, IP.hostname(), PORT);
 		singletons.add(new ResourceConfig());
-		resources.add(RestBlobsResource.class);
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
 		resources.add(RequestCookiesFilter.class);

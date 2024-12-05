@@ -11,7 +11,6 @@ public class RedisLayer {
 		return instance;
 	}
 	
-	
 	public void putSession(Session s) {
 		CacheForCosmos.insertOne(s.uid(), s);
 	}

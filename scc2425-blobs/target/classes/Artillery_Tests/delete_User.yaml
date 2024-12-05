@@ -1,0 +1,17 @@
+config:
+  target: https://scc-70526-70527.azurewebsites.net/rest/
+  phases:
+    - name: delete_User
+      duration: 1
+      arrivalCount: 1
+
+scenarios:
+  - name: TuKanoHome
+    flow:
+      - delete:
+          url: /users/Cambio?pwd=easypass
+          capture:
+            json: '$'
+            as: 'deleteResponse'
+
+      - log: "Deleted User : {{ deleteResponse }}" 

@@ -1,0 +1,18 @@
+config:
+  target: https://scc-70526-70527.azurewebsites.net/rest/
+  phases:
+    - name: create_short_n_upload_blob
+      duration: 1 
+      arrivalRate: 1 
+
+scenarios:
+  - name: TuKanoHome
+    flow:
+      - post:
+          url: /shorts/Cambio?pwd=easypass
+          capture: 
+            json: '$'  
+            as: 'response'  
+
+      - post:
+          url: '{{ response.blobUrl }}'  

@@ -45,6 +45,8 @@ public class JavaShorts implements Shorts {
 	private static Shorts instance;
 
 	private static Dotenv dotenv = Dotenv.load();
+
+	private static final String BLOBS_NAME = "blobs";
 	
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
@@ -62,7 +64,7 @@ public class JavaShorts implements Shorts {
 		return errorOrResult( okUser(userId, password), user -> {
 			
 			var shortId = format("%s+%s", userId, UUID.randomUUID());
-			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId); 
+			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, BLOBS_NAME, shortId); 
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			Result<Short> result  =  errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
@@ -119,8 +121,6 @@ public class JavaShorts implements Shorts {
 					
 					var query = format("DELETE FROM Likes l WHERE l.shortId = '%s'", shortId);
 					hibernate.createNativeQuery( query, Likes.class).executeUpdate();
-					
-					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get() );
 				});
 			});	
 		});
@@ -130,7 +130,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> getShorts(String userId) {
 		Log.info(() -> format("getShorts : userId = %s\n", userId));
 
-		var query1 = format("SELECT VALUE s.id FROM Short s WHERE s.ownerId = '%s'", userId);
+		//var query1 = format("SELECT VALUE s.id FROM Short s WHERE s.ownerId = '%s'", userId);
 		var query2 = format("SELECT s.id FROM Short s WHERE s.ownerId = '%s'", userId);
 
 		return errorOrValue( okUser(userId), DB.sql( query2, String.class));
@@ -152,7 +152,7 @@ public class JavaShorts implements Shorts {
 	public Result<List<String>> followers(String userId, String password) {
 		Log.info(() -> format("followers : userId = %s, pwd = %s\n", userId, password));
 
-		var query1 = format("SELECT VALUE f.follower FROM Following f WHERE f.followee = '%s'", userId);	
+		//var query1 = format("SELECT VALUE f.follower FROM Following f WHERE f.followee = '%s'", userId);	
 		var query2 = format("SELECT f.follower FROM Following f WHERE f.followee = '%s'", userId);	
 
 		return errorOrValue( okUser(userId, password), DB.sql(query2, String.class));
@@ -176,7 +176,7 @@ public class JavaShorts implements Shorts {
 
 		return errorOrResult( getShort(shortId), shrt -> {
 			
-			var query1 = format("SELECT VALUE l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
+			//var query1 = format("SELECT VALUE l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);
 			var query2 = format("SELECT l.userId FROM Likes l WHERE l.shortId = '%s'", shortId);					
 			
 			return errorOrValue( okUser( shrt.getOwnerId(), password ), DB.sql(query2, String.class));
