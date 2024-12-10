@@ -8,23 +8,15 @@ import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
 
-import java.net.URI;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.ws.rs.core.NewCookie;
-import jakarta.ws.rs.core.Response;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
 import utils.DB;
-import utils.CosmosDB;
 import tukano.impl.cache.CacheForCosmos;
-import tukano.impl.cache.RedisLayer;
-import tukano.impl.data.Following;
 
 
 public class JavaUsers implements Users {
@@ -32,7 +24,6 @@ public class JavaUsers implements Users {
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
 
 	private static Users instance;
-	private static Dotenv dotenv = Dotenv.load();
 	
 	synchronized public static Users getInstance() {
 		if( instance == null )
@@ -59,7 +50,6 @@ public class JavaUsers implements Users {
 		if(res.isOK()){
 			Log.info(() -> "Inserting into cache");
 			CacheForCosmos.insertOne("users:"+user.getUserId(), user);
-			//DB.insertOne(new Following(user.getUserId()));
 		}
 		Log.info(() -> "Returning result");
 		return errorOrValue(res, user.getUserId());

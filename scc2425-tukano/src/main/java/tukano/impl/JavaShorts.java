@@ -25,8 +25,6 @@ import org.hsqldb.persist.Log;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.github.cdimascio.dotenv.Dotenv;
-import tukano.api.Blobs;
 import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.Shorts;
@@ -36,7 +34,6 @@ import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
 import tukano.impl.rest.TukanoRestServer;
 import utils.DB;
-import utils.CosmosDB;
 
 public class JavaShorts implements Shorts {
 
@@ -44,7 +41,6 @@ public class JavaShorts implements Shorts {
 	
 	private static Shorts instance;
 
-	private static Dotenv dotenv = Dotenv.load();
 
 	private static final String BLOBS_NAME = "blobs";
 	
@@ -64,7 +60,7 @@ public class JavaShorts implements Shorts {
 		return errorOrResult( okUser(userId, password), user -> {
 			
 			var shortId = format("%s+%s", userId, UUID.randomUUID());
-			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, BLOBS_NAME, shortId); 
+			var blobUrl = format("%s/%s/%s", System.getenv().getOrDefault("BLOB_HOST", "blob-storage"), BLOBS_NAME, shortId); 
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			Result<Short> result  =  errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
@@ -103,7 +99,6 @@ public class JavaShorts implements Shorts {
 		return result;
 			
 	}
-
 	
 	@Override
 	public Result<Void> deleteShort(String shortId, String password) {

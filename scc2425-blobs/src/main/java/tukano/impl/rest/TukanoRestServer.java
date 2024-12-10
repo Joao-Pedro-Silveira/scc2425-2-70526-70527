@@ -26,8 +26,6 @@ public class TukanoRestServer extends Application {
 
 	public static final int PORT = 8080;
 
-	public static String serverURI;
-
 	private Set<Object> singletons = new HashSet<>();
 	private Set<Class<?>> resources = new HashSet<>();
 
@@ -38,7 +36,6 @@ public class TukanoRestServer extends Application {
 	
 	public TukanoRestServer() {
 		Token.setSecret( Args.valueOf("-secret", "bonk"));
-		serverURI = "https://scc-70526-70527.azurewebsites.net/rest";//String.format(SERVER_BASE_URI, IP.hostname(), PORT);
 		singletons.add(new ResourceConfig());
 		resources.add(RestBlobsResource.class);
 		resources.add(RequestCookiesFilter.class);
@@ -50,7 +47,6 @@ public class TukanoRestServer extends Application {
 		Args.use(args);
 		
 		Token.setSecret( Args.valueOf("-secret", "bonk"));
-//		Props.load( Args.valueOf("-props", "").split(","));
 		
 		new TukanoRestServer();
 	}

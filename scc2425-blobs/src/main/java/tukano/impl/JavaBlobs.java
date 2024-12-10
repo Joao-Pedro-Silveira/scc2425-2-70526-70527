@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 import tukano.api.Blobs;
 import tukano.api.Result;
 import tukano.impl.rest.TukanoRestServer;
-import tukano.impl.storage.AzureBlobStorage;
 import tukano.impl.storage.BlobStorage;
 import tukano.impl.storage.FilesystemStorage;
 import utils.Hash;
@@ -20,7 +19,6 @@ public class JavaBlobs implements Blobs {
 	private static Blobs instance;
 	private static Logger Log = Logger.getLogger(JavaBlobs.class.getName());
 
-	public String baseURI;
 	private BlobStorage storage;
 	
 	synchronized public static Blobs getInstance() {
@@ -31,7 +29,6 @@ public class JavaBlobs implements Blobs {
 	
 	private JavaBlobs() {
 		storage = new FilesystemStorage();
-		baseURI = String.format("%s/%s/", TukanoRestServer.serverURI, Blobs.NAME);
 	}
 	
 	@Override
