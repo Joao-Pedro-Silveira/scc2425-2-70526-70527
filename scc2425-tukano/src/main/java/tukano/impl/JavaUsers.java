@@ -16,7 +16,7 @@ import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
 import utils.DB;
-import tukano.impl.cache.CacheForCosmos;
+import tukano.impl.cache.MyCache;
 
 
 public class JavaUsers implements Users {
@@ -49,7 +49,7 @@ public class JavaUsers implements Users {
 
 		if(res.isOK()){
 			Log.info(() -> "Inserting into cache");
-			CacheForCosmos.insertOne("users:"+user.getUserId(), user);
+			MyCache.insertOne("users:"+user.getUserId(), user);
 		}
 		Log.info(() -> "Returning result");
 		return errorOrValue(res, user.getUserId());
@@ -62,7 +62,7 @@ public class JavaUsers implements Users {
 		if (userId == null)
 			return error(BAD_REQUEST);
 		
-		var res = CacheForCosmos.getOne("users:"+userId, User.class, true);
+		var res = MyCache.getOne("users:"+userId, User.class, true);
 		if(res.isOK()){
 
 			Log.info(() -> "User found in cache ");
@@ -75,7 +75,7 @@ public class JavaUsers implements Users {
 
 		if(dbres.isOK()){
 			Log.info(() -> "User found in DB");
-			CacheForCosmos.insertOne("users:"+userId, dbres.value());
+			MyCache.insertOne("users:"+userId, dbres.value());
 		}
 
 		Authentication.login(dbres.value().getUserId(), pwd);
@@ -92,7 +92,7 @@ public class JavaUsers implements Users {
 		return errorOrResult( validatedUserOrError(DB.getOne(userId, User.class), pwd), user -> {
 			var res = DB.updateOne( user.updateFrom(other));
 			if(res.isOK()){
-				CacheForCosmos.updateOne("users:"+userId, res.value());
+				MyCache.updateOne("users:"+userId, res.value());
 			}
 			return res;
 		});
@@ -112,7 +112,7 @@ public class JavaUsers implements Users {
 				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 			}).start();
 
-			CacheForCosmos.deleteOne("users:"+userId);
+			MyCache.deleteOne("users:"+userId);
 			
 			return DB.deleteOne( user);
 		});

@@ -7,21 +7,12 @@ import static tukano.api.Result.errorOrValue;
 import static tukano.api.Result.errorOrVoid;
 import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
-import static tukano.api.Result.ErrorCode.CONFLICT;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
-import static tukano.api.Result.ErrorCode.NOT_FOUND;
 import static utils.DB.getOne;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import org.checkerframework.checker.units.qual.C;
-import org.glassfish.hk2.utilities.cache.Cache;
-import org.hsqldb.persist.Log;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -29,10 +20,9 @@ import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.Shorts;
 import tukano.api.User;
-import tukano.impl.cache.CacheForCosmos;
+import tukano.impl.cache.MyCache;
 import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
-import tukano.impl.rest.TukanoRestServer;
 import utils.DB;
 
 public class JavaShorts implements Shorts {
@@ -66,7 +56,7 @@ public class JavaShorts implements Shorts {
 			Result<Short> result  =  errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
 
 			if (result.isOK()){
-				CacheForCosmos.insertOne("shorts:"+shortId, shrt);
+				MyCache.insertOne("shorts:"+shortId, shrt);
 			}
 
 			return result;
@@ -80,7 +70,7 @@ public class JavaShorts implements Shorts {
 		if( shortId == null )
 			return error(BAD_REQUEST);
 
-		var res = CacheForCosmos.getOne("shorts:"+shortId, Short.class, true);
+		var res = MyCache.getOne("shorts:"+shortId, Short.class, true);
 
 		if (res.isOK()){
 			Log.info(() -> format("Short found in cache %s\n", res.value().toString()));
@@ -94,7 +84,7 @@ public class JavaShorts implements Shorts {
 
 		if (result.isOK()){ 
 
-			CacheForCosmos.insertOne("shorts:"+shortId, result.value());
+			MyCache.insertOne("shorts:"+shortId, result.value());
 		}
 		return result;
 			
@@ -108,7 +98,7 @@ public class JavaShorts implements Shorts {
 			
 			return errorOrResult( okUser( shrt.getOwnerId(), password), user -> {
 
-				CacheForCosmos.deleteOne("shorts:"+shortId);
+				MyCache.deleteOne("shorts:"+shortId);
 
 				return DB.transaction( hibernate -> {
 
@@ -246,7 +236,7 @@ public class JavaShorts implements Shorts {
 			var res = hibernate.createNativeQuery(query, String.class).getResultList();
 
 			for(String id : res){
-				CacheForCosmos.deleteOne("shorts:"+id);
+				MyCache.deleteOne("shorts:"+id);
 			}
 
 			var query1 = format("DELETE FROM Short s WHERE s.ownerId = '%s'", userId);

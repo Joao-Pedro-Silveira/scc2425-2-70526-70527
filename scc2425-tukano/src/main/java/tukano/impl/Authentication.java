@@ -1,12 +1,10 @@
 package tukano.impl;
 
-import java.net.URI;
 import java.util.UUID;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
-import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;

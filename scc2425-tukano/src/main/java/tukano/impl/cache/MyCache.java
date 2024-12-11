@@ -2,13 +2,11 @@ package tukano.impl.cache;
 
 import java.util.logging.Logger;
 
-import org.hsqldb.persist.Log;
-
 import tukano.api.Result;
 import tukano.impl.JavaUsers;
 import utils.JSON;
 
-public class CacheForCosmos {
+public class MyCache {
 	
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
 

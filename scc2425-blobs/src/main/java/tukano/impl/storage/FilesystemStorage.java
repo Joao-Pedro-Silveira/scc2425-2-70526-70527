@@ -1,6 +1,5 @@
 package tukano.impl.storage;
 
-
 import static tukano.api.Result.error;
 import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
