@@ -1,0 +1,17 @@
+config:
+  target: http://4.207.181.87:80/tukano-1/rest
+  phases:
+    - name: delete_User
+      duration: 1
+      arrivalCount: 1
+
+scenarios:
+  - name: TuKanoHome
+    flow:
+      - delete:
+          url: /users/Cambio?pwd=easypass
+          capture:
+            json: '$'
+            as: 'deleteResponse'
+
+      - log: "Deleted User : {{ deleteResponse }}" 

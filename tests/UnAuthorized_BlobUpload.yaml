@@ -1,0 +1,24 @@
+config:
+  target: http://4.207.181.87:80/tukano-1/rest
+  phases:
+    - name: UnAuthorized_BlobUpload
+      duration: 1
+      arrivalRate: 1
+
+scenarios:
+  - name: TuKanoHome
+    flow:
+      - get:
+          url: /users/Cambio?pwd=easypass
+          headers:
+            Content-Type: application/json
+
+      - post:
+          url: /shorts/Cambio?pwd=easypass
+          capture:
+            json: '$'
+            as: 'response'
+
+      - post:
+          url: '{{ response.blobUrl }}'
+

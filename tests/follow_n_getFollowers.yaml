@@ -1,0 +1,20 @@
+config:
+  target: http://4.207.181.87:80/tukano-1/rest
+  phases:
+    - name: follow_n_getFollowers
+      duration: 1 
+      arrivalRate: 1 
+
+scenarios:
+  - name: TuKanoHome
+    flow:
+      - post:
+          url: /shorts/Cambio/kgallagher2/followers?isFollowing=true&pwd=easypass
+
+      - get:
+          url: /shorts/kgallagher2/followers?pwd=securepasswordlol
+          capture:
+            json: '$'
+            as: 'FollowResponse'
+
+      - log: "Followers : {{ FollowResponse }}" 

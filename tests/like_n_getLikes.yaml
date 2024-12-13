@@ -1,0 +1,26 @@
+config:
+  target: http://4.207.181.87:80/tukano-1/rest
+  phases:
+    - name: like_n_getLikes
+      duration: 1 
+      arrivalRate: 1 
+
+scenarios:
+  - name: TuKanoHome
+    flow:
+      - post:
+          url: /shorts/kgallagher2?pwd=securepasswordlol
+          capture: 
+            json: '$'  
+            as: 'response'
+
+      - post:
+          url: /shorts/{{ response.shortId }}/Cambio/likes?isLiked=true&pwd=easypass
+
+      - get:
+          url: /shorts/{{ response.shortId }}/likes?pwd=securepasswordlol
+          capture:
+            json: '$'
+            as: 'LikesResponse'
+
+      - log: "Likes of {{ response.shortId}} : {{ LikesResponse }}" 
