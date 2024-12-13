@@ -1,4 +1,4 @@
-# Persistent Volume for Blob Storage
+# Blob Storage Persistent Volume
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -37,6 +37,8 @@ spec:
       - name: blob-volume
         persistentVolumeClaim:
           claimName: blob-storage-pvc
+
+# Blob Storage Service
 ---
 apiVersion: v1
 kind: Service
@@ -79,6 +81,8 @@ spec:
           value: "tukano"
         - name: POSTGRES_PASSWORD
           value: "tukano"
+
+# Database Service
 ---
 apiVersion: v1
 kind: Service
@@ -112,10 +116,12 @@ spec:
       containers:
       - name: cache
         image: redis
-      - args:
+        args:
         - redis-server
         - --requirepass
         - "key"
+
+# Cache Service
 ---
 apiVersion: v1
 kind: Service
@@ -150,7 +156,12 @@ spec:
       - name: tukano
         image: jpgsilveira/tukano
         ports:
-        - containerPort: 8080        
+        - containerPort: 8080  
+        env:
+        - name: BLOB_HOST
+          value: "http://4.207.180.242:8080/tukano-blobs-1/rest"
+          
+# Tukano Main Application Service
 ---
 apiVersion: v1
 kind: Service
