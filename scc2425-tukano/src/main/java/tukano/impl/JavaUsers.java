@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.Response;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
@@ -56,7 +58,7 @@ public class JavaUsers implements Users {
 	}
 
 	@Override
-	public Result<User> getUser(String userId, String pwd) {
+	public Result<Response> getUser(String userId, String pwd) {
 		Log.info( () -> format("getUser : userId = %s, pwd = %s\n", userId, pwd));
 
 		if (userId == null)
@@ -67,8 +69,12 @@ public class JavaUsers implements Users {
 
 			Log.info(() -> "User found in cache ");
 			
-			Authentication.login(res.value().getUserId(), pwd);
-			return validatedUserOrError(res, pwd);
+			NewCookie cookie = Authentication.login(res.value().getUserId(), pwd);
+			var result = validatedUserOrError(res, pwd);
+			if(!result.isOK()){
+				return error(result.error());
+			}
+			return ok(Response.ok(result.value()).cookie(cookie).build());
 		}
 
 		Result<User> dbres = DB.getOne( userId, User.class);
@@ -78,8 +84,12 @@ public class JavaUsers implements Users {
 			MyCache.insertOne("users:"+userId, dbres.value());
 		}
 
-		Authentication.login(dbres.value().getUserId(), pwd);
-		return validatedUserOrError(dbres, pwd);
+		NewCookie cookie = Authentication.login(dbres.value().getUserId(), pwd);
+		var result = validatedUserOrError(dbres, pwd);
+		if(!result.isOK()){
+			return error(result.error());
+		}
+		return ok(Response.ok(result.value()).cookie(cookie).build());
 	}
 
 	@Override

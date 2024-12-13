@@ -8,7 +8,6 @@ import javax.ws.rs.core.Response.Status;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;
-import jakarta.ws.rs.core.Response;
 import tukano.impl.auth.RequestCookies;
 
 import tukano.impl.cache.RedisLayer;
@@ -18,9 +17,9 @@ public class Authentication {
 	static final String LOGIN_PAGE = "login.html";
 	private static final int MAX_COOKIE_AGE = 3600;
 
-	static public Response login( String userId, String password ) {
+	static public NewCookie login( String userId, String password ) {
 		System.out.println("user: " + userId + " pwd:" + password );
-		boolean pwdOk = true; // replace with code to check user password
+		boolean pwdOk = true;
 		if (pwdOk) {
 			String uid = UUID.randomUUID().toString();
 			var cookie = new NewCookie.Builder(COOKIE_KEY)
@@ -33,9 +32,7 @@ public class Authentication {
 			
 			RedisLayer.getInstance().putSession( new Session( uid, userId));	
 			
-            return Response.ok()
-                    .cookie(cookie) 
-                    .build();
+            return cookie;
 		} else
 			throw new NotAuthorizedException("Incorrect login");
 	}

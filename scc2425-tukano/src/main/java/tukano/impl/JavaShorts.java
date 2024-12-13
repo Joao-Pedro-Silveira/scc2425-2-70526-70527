@@ -16,10 +16,10 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.ws.rs.core.Response;
 import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.Shorts;
-import tukano.api.User;
 import tukano.impl.cache.MyCache;
 import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
@@ -50,7 +50,7 @@ public class JavaShorts implements Shorts {
 		return errorOrResult( okUser(userId, password), user -> {
 			
 			var shortId = format("%s+%s", userId, UUID.randomUUID());
-			var blobUrl = format("%s/%s/%s", System.getenv().getOrDefault("BLOB_HOST", "blob-storage"), BLOBS_NAME, shortId); 
+			var blobUrl = format("%s/%s/%s", System.getenv().getOrDefault("BLOB_HOST", "blob-storage"), BLOBS_NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
 			Result<Short> result  =  errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
@@ -211,7 +211,7 @@ public class JavaShorts implements Shorts {
         }
     }
 	
-	protected Result<User> okUser( String userId, String pwd) {
+	protected Result<Response> okUser( String userId, String pwd) {
 		return JavaUsers.getInstance().getUser(userId, pwd);
 	}
 	

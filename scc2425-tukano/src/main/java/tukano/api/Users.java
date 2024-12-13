@@ -2,6 +2,8 @@ package tukano.api;
 
 import java.util.List;
 
+import jakarta.ws.rs.core.Response;
+
 public interface Users {
 	
 	String NAME = "users";
@@ -23,7 +25,7 @@ public interface Users {
 	 *         FORBIDDEN - if the password is incorrect; 
 	 *         NOT_FOUND - if no user exists with the provided userId
 	 */
-	Result<User> getUser(String userId, String pwd);
+	Result<Response> getUser(String userId, String pwd);
 	
 	/**
 	 * Modifies the information of a user. Value of null, in any field of the user argument, means the field will remain as unchanged 

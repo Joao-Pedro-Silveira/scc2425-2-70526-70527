@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 
 import tukano.api.Blobs;
 import tukano.api.Result;
-import tukano.impl.rest.TukanoRestServer;
 import tukano.impl.storage.BlobStorage;
 import tukano.impl.storage.FilesystemStorage;
 import utils.Hash;
@@ -63,7 +62,7 @@ public class JavaBlobs implements Blobs {
 		if( ! validBlobId( blobId, token ) )
 			return error(FORBIDDEN);
 
-		Authentication.validateSession("admin"); //TODO: create admin session
+		Authentication.validateSession("admin");
 
 		return storage.delete( toPath(blobId));
 	}
@@ -75,8 +74,8 @@ public class JavaBlobs implements Blobs {
 		if( ! Token.isValid( token, userId ) )
 			return error(FORBIDDEN);
 		
-		Authentication.validateSession("admin"); //TODO: create admin session
-
+		Authentication.validateSession("admin");
+		
 		return storage.delete( toPath(userId));
 	}
 	

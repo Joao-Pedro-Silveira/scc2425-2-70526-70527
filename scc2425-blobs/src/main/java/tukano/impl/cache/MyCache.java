@@ -5,9 +5,9 @@ import java.util.logging.Logger;
 import tukano.api.Result;
 import utils.JSON;
 
-public class Cache {
+public class MyCache {
 	
-	private static Logger Log = Logger.getLogger(Cache.class.getName());
+	private static Logger Log = Logger.getLogger(MyCache.class.getName());
 
 	private static final int DEFAULT_TTL = 30;
 

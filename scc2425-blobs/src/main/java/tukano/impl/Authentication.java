@@ -1,12 +1,10 @@
 package tukano.impl;
 
-import java.net.URI;
 import java.util.UUID;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
-import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;
@@ -22,7 +20,7 @@ public class Authentication {
 
 	static public Response login( String userId, String password ) {
 		System.out.println("user: " + userId + " pwd:" + password );
-		boolean pwdOk = true; // replace with code to check user password
+		boolean pwdOk = true;
 		if (pwdOk) {
 			String uid = UUID.randomUUID().toString();
 			var cookie = new NewCookie.Builder(COOKIE_KEY)
